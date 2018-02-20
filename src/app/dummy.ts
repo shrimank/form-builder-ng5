@@ -1,12 +1,16 @@
-import { Component, OnInit } from '@angular/core';
-
+import { Component } from '@angular/core';
+import { OnInit } from '@angular/core/src/metadata/lifecycle_hooks';
+import * as $ from 'jquery';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
+
+  title = 'app';
+
   fields = [
     {
       type: 'autocomplete',
@@ -54,12 +58,13 @@ export class AppComponent implements OnInit {
     }
   }];
 
+  
   templates = {
     starRating: function (fieldData) {
       return {
         field: '<span id="' + fieldData.name + '">',
         onRender: function () {
-          let element = <any> $(document.getElementById(fieldData.name));
+          let element =$(document.getElementById(fieldData.name));
           element.rateYo({ rating: 3.6 });
         }
       };
@@ -138,13 +143,12 @@ export class AppComponent implements OnInit {
       text: ['datetime-local']
     },
     onSave: function (e, formData) {
-      //this.toggleEdit();
-      let render_wrap = <any> $('.render-wrap');
-      render_wrap.formRender({
+      this.toggleEdit();
+      $('.render-wrap').formRender({
         formData: formData,
         templates: this.templates
       });
-      localStorage.setItem('formData', JSON.stringify(formData));
+      window.sessionStorage.setItem('formData', JSON.stringify(formData));
     },
     stickyControls: {
       enable: true
@@ -161,34 +165,41 @@ export class AppComponent implements OnInit {
     replaceFields: this.replaceFields,
     disabledFieldButtons: {
       text: ['copy']
-    },
-    formData: undefined
+    }
     // controlPosition: 'left'
     // disabledAttrs
   };
-  formData = localStorage.getItem('formData');
+  formData = window.sessionStorage.getItem('formData');
   editing = true;
-  setFormData = '[{"type":"text","label":"Full Name","subtype":"text","className":"form-control","name":"text-1476748004559"},{"type":"select","label":"Occupation","className":"form-control","name":"select-1476748006618","values":[{"label":"Street Sweeper","value":"option-1","selected":true},{"label":"Moth Man","value":"option-2"},{"label":"Chemist","value":"option-3"}]},{"type":"textarea","label":"Short Bio","rows":"5","className":"form-control","name":"textarea-1476748007461"}]';
 
-  formBuilder: any;
-  fbPromise: any;
   fbActual: any;
 
 
-  ngOnInit() { }
 
-  ngAfterViewInit() {
-    let build_wrap =<any> $('.build-wrap');
-    this.formBuilder = build_wrap.formBuilder(this.fbOptions);
+  /**
+   * Toggles the edit mode for the demo
+   * @return {Boolean} editMode
+   */
+  toggleEdit() {
+    document.body.classList.toggle('form-rendered', this.editing);
+    return this.editing = !this.editing;
+  }
+
+  setFormData = '[{"type":"text","label":"Full Name","subtype":"text","className":"form-control","name":"text-1476748004559"},{"type":"select","label":"Occupation","className":"form-control","name":"select-1476748006618","values":[{"label":"Street Sweeper","value":"option-1","selected":true},{"label":"Moth Man","value":"option-2"},{"label":"Chemist","value":"option-3"}]},{"type":"textarea","label":"Short Bio","rows":"5","className":"form-control","name":"textarea-1476748007461"}]';
+
+  formBuilder: any;
+  fbPromise:any;
+
+  constructor() {
+    console.log(JSON.stringify($('.build-wrap')));
+    this.formBuilder = $('.build-wrap').formBuilder(this.fbOptions);
     this.fbPromise = this.formBuilder.promise;
     if (this.formData) {
-      this.fbOptions.formData = JSON.parse(this.formData);
+      this.fbOptions.formData = JSON.parse(formData);
     }
-    this.fbActual = undefined;
+
     this.fbPromise.then(function (fb) {
-
-      this.fbActual ? this.fbActual = fb : this.fbActual = undefined;
-
+      this.fbActual = fb;
       var apiBtns = {
         showData: this.fbActual.actions.showData,
         clearFields: this.fbActual.actions.clearFields,
@@ -214,12 +225,12 @@ export class AppComponent implements OnInit {
           console.log('Can submit: ', document.forms[0].checkValidity());
           // Display the key/value pairs
           console.log('FormData:', formData);
-          for (var pair of (<any>formData).entries()) {
+          for (var pair of formData.entries()) {
             console.log(pair[0] + ': ' + pair[1]);
           }
         },
         resetDemo: function () {
-          localStorage.removeItem('formData');
+          window.sessionStorage.removeItem('formData');
           location.reload();
         }
       };
@@ -231,15 +242,13 @@ export class AppComponent implements OnInit {
           });
       });
 
+      document.getElementById('setLanguage')
+        .addEventListener('change', function (e) {
+          this.fbActual.actions.setLang(e.target.value);
+        });
+
+
     });
-
-
-  }
-
-
-  toggleEdit() {
-    document.body.classList.toggle('form-rendered', this.editing);
-    return this.editing = !this.editing;
   }
 
   setLanguage(event: any) {
@@ -264,4 +273,7 @@ export class AppComponent implements OnInit {
     alert('Check console');
     console.log(this.formBuilder.actions.getData());
   }
+
+
+
 }
